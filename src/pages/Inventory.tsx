@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus, Search, Trash2, Edit3, X, Save,
-  Package, AlertTriangle, Boxes, TrendingUp, Wallet
+  Package, AlertTriangle, Boxes, TrendingUp, Wallet, Tag
 } from 'lucide-react';
 import {
   collection,
@@ -37,6 +37,7 @@ const Inventory: React.FC<InventoryProps> = ({ userId }) => {
   // Form state
   const [formData, setFormData] = useState({
     name: '',
+    sku: '',
     buyingPrice: '',
     sellingPrice: '',
     stockQuantity: '',
@@ -62,13 +63,14 @@ const Inventory: React.FC<InventoryProps> = ({ userId }) => {
     return () => unsubscribe();
   }, [userId]);
 
-  // Filtered products
+  // Filtered products (name, category, or SKU)
   const filteredProducts = useMemo(() => {
     const q = searchTerm.toLowerCase().trim();
     if (!q) return products;
     return products.filter(p =>
       p.name.toLowerCase().includes(q) ||
-      (p.category && p.category.toLowerCase().includes(q))
+      (p.category && p.category.toLowerCase().includes(q)) ||
+      (p.sku && p.sku.toLowerCase().includes(q))
     );
   }, [products, searchTerm]);
 
@@ -91,6 +93,7 @@ const Inventory: React.FC<InventoryProps> = ({ userId }) => {
   const resetForm = () => {
     setFormData({
       name: '',
+      sku: '',
       buyingPrice: '',
       sellingPrice: '',
       stockQuantity: '',
@@ -111,6 +114,7 @@ const Inventory: React.FC<InventoryProps> = ({ userId }) => {
   const handleEdit = (product: Product) => {
     setFormData({
       name: product.name,
+      sku: product.sku || '',
       buyingPrice: product.buyingPrice.toString(),
       sellingPrice: product.sellingPrice.toString(),
       stockQuantity: product.stockQuantity.toString(),
@@ -127,6 +131,7 @@ const Inventory: React.FC<InventoryProps> = ({ userId }) => {
 
     const data = {
       name: formData.name.trim(),
+      sku: formData.sku.trim(),
       buyingPrice: parseFloat(formData.buyingPrice) || 0,
       sellingPrice: parseFloat(formData.sellingPrice) || 0,
       stockQuantity: parseInt(formData.stockQuantity) || 0,
@@ -142,6 +147,35 @@ const Inventory: React.FC<InventoryProps> = ({ userId }) => {
     if (data.sellingPrice <= 0) {
       alert('Selling price must be greater than 0.');
       return;
+    }
+
+    // Exclude the product currently being edited so it can't clash with itself
+    const others = products.filter(p => p.id !== editingId);
+
+    // SKU must be unique when provided — hard block
+    if (data.sku) {
+      const skuClash = others.find(
+        p => p.sku && p.sku.toLowerCase() === data.sku.toLowerCase()
+      );
+      if (skuClash) {
+        alert(
+          `SKU "${data.sku}" is already used by "${skuClash.name}". Please choose a different SKU.`
+        );
+        return;
+      }
+    }
+
+    // Duplicate name — soft warn (names can legitimately repeat, e.g. sizes)
+    const nameClash = others.find(
+      p => p.name.toLowerCase() === data.name.toLowerCase()
+    );
+    if (nameClash) {
+      const proceed = confirm(
+        `A product named "${data.name}" already exists${
+          nameClash.sku ? ` (SKU: ${nameClash.sku})` : ''
+        }. Continue anyway?`
+      );
+      if (!proceed) return;
     }
 
     try {
@@ -256,7 +290,7 @@ const Inventory: React.FC<InventoryProps> = ({ userId }) => {
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
         <input
           type="text"
-          placeholder="Search products…"
+          placeholder="Search by name, category or SKU…"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-12 pr-4 py-4 bg-white rounded-2xl border border-slate-200 focus:border-teal-300 focus:ring-4 focus:ring-teal-50 font-medium outline-none"
@@ -294,11 +328,17 @@ const Inventory: React.FC<InventoryProps> = ({ userId }) => {
 
                   {/* Left: Product info */}
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
                       <h3 className="text-lg font-bold text-slate-900">{product.name}</h3>
                       <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase border ${status.color}`}>
                         {status.label}
                       </span>
+                      {product.sku && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase border bg-slate-100 text-slate-600 border-slate-200">
+                          <Tag size={10} />
+                          {product.sku}
+                        </span>
+                      )}
                     </div>
 
                     {product.category && (
@@ -401,17 +441,31 @@ const Inventory: React.FC<InventoryProps> = ({ userId }) => {
                 />
               </div>
 
-              <div>
-                <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1 block mb-2">
-                  Category (optional)
-                </label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  placeholder="E.g., Food"
-                  className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-teal-300 focus:ring-4 focus:ring-teal-100 font-medium"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1 block mb-2">
+                    Category (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    placeholder="E.g., Food"
+                    className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-teal-300 focus:ring-4 focus:ring-teal-100 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1 block mb-2">
+                    SKU / Code (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    placeholder="E.g., BREAD-001"
+                    className="w-full p-4 bg-slate-50 rounded-xl border border-slate-200 outline-none focus:border-teal-300 focus:ring-4 focus:ring-teal-100 font-medium"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -15,7 +15,10 @@ import {
 
 const LoginScreen: React.FC = () => {
   const navigate = useNavigate();
-  const [isRegistering, setIsRegistering] = useState(false);
+  const location = useLocation();
+  const isRegisterRoute = location.pathname === '/register';
+
+  const [isRegistering, setIsRegistering] = useState(isRegisterRoute);
   const [isResetting, setIsResetting] = useState(false);
   const [businessName, setBusinessName] = useState('');
   const [email, setEmail] = useState('');
@@ -24,6 +27,15 @@ const LoginScreen: React.FC = () => {
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Keep register mode in sync with the URL
+  // (e.g. direct visit to /register, or back/forward navigation)
+  useEffect(() => {
+    setIsRegistering(location.pathname === '/register');
+    setIsResetting(false);
+    setError('');
+    setMessage('');
+  }, [location.pathname]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -58,6 +70,7 @@ const LoginScreen: React.FC = () => {
         setMessage('Account created successfully! Please sign in.');
         setIsRegistering(false);
         setPassword('');
+        navigate('/login');
       } else {
         await signInWithEmailAndPassword(auth, email, password);
         navigate('/dashboard');
@@ -104,6 +117,19 @@ const LoginScreen: React.FC = () => {
     setError('');
     setMessage('');
     setPassword('');
+  };
+
+  // Switch between login and register, keeping the URL in sync
+  const goToLogin = () => {
+    setIsRegistering(false);
+    resetAll();
+    if (location.pathname !== '/login') navigate('/login');
+  };
+
+  const goToRegister = () => {
+    setIsRegistering(true);
+    resetAll();
+    if (location.pathname !== '/register') navigate('/register');
   };
 
   return (
@@ -168,7 +194,7 @@ const LoginScreen: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white font-bold text-base py-4 rounded-2xl hover:bg-teal-700 disabled:bg-teal-300 shadow-lg shadow-teal-500/30 transition-all active:scale-[0.98]"
+                className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white font-bold text-base py-4 rounded-2xl hover:bg-teal-500 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-teal-500/50 active:translate-y-0 active:scale-[0.98] disabled:bg-teal-300 disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:cursor-not-allowed shadow-lg shadow-teal-500/30 transition-all duration-200"
               >
                 {loading ? 'Sending…' : <><KeyRound size={18} /> Send Reset Link</>}
               </button>
@@ -249,7 +275,7 @@ const LoginScreen: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white font-bold text-base py-4 rounded-2xl hover:bg-teal-700 disabled:bg-teal-300 shadow-lg shadow-teal-500/30 transition-all active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-2 bg-teal-600 text-white font-bold text-base py-4 rounded-2xl hover:bg-teal-500 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-teal-500/50 active:translate-y-0 active:scale-[0.98] disabled:bg-teal-300 disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:cursor-not-allowed shadow-lg shadow-teal-500/30 transition-all duration-200"
                 >
                   {loading
                     ? 'Please wait…'
@@ -261,7 +287,7 @@ const LoginScreen: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => { setIsRegistering(!isRegistering); resetAll(); }}
+                onClick={isRegistering ? goToLogin : goToRegister}
                 className="w-full mt-6 text-sm font-bold text-slate-400 hover:text-teal-600 transition-colors"
               >
                 {isRegistering ? 'Back to Login' : 'New merchant? Register Business'}

@@ -102,7 +102,7 @@ export default function Welcome() {
             </div>
             <button
               onClick={() => navigate('/login')}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-semibold hover:bg-white/20 transition"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-semibold hover:bg-white/25 hover:border-white/40 hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg shadow-transparent hover:shadow-white/10"
             >
               Sign in <ArrowRight size={14} />
             </button>
@@ -130,15 +130,15 @@ export default function Welcome() {
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
                   <button
-                    onClick={() => navigate('/login')}
-                    className="group inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-teal-600 text-white font-bold text-base hover:bg-teal-500 transition shadow-2xl shadow-teal-900/50"
+                    onClick={() => navigate('/register')}
+                    className="group inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-teal-600 text-white font-bold text-base hover:bg-teal-500 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-teal-500/50 active:translate-y-0 active:scale-[0.98] transition-all duration-200 shadow-2xl shadow-teal-900/50"
                   >
                     Get started free
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button
                     onClick={() => navigate('/login')}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-base hover:bg-white/20 transition"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-base hover:bg-white/25 hover:border-white/40 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-white/10 active:translate-y-0 active:scale-[0.98] transition-all duration-200"
                   >
                     I have an account
                   </button>
@@ -161,14 +161,20 @@ export default function Welcome() {
                 {HIGHLIGHTS.map((h, i) => (
                   <div
                     key={i}
-                    className="flex items-start gap-4 p-4 md:p-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl hover:bg-white/15 transition"
+                    className="group flex items-start gap-4 p-4 md:p-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl cursor-default hover:bg-white/20 hover:border-white/40 hover:-translate-y-1 hover:shadow-2xl hover:shadow-teal-500/20 active:translate-y-0 active:scale-[0.99] transition-all duration-300"
                   >
-                    <div className={`flex-shrink-0 p-2.5 rounded-xl ${h.bg} ${h.color}`}>
+                    <div
+                      className={`flex-shrink-0 p-2.5 rounded-xl ${h.bg} ${h.color} transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
+                    >
                       {h.icon}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white mb-0.5">{h.title}</p>
-                      <p className="text-xs text-white/70 leading-relaxed">{h.desc}</p>
+                      <p className="text-sm font-bold text-white mb-0.5 transition-colors group-hover:text-teal-200">
+                        {h.title}
+                      </p>
+                      <p className="text-xs text-white/70 leading-relaxed transition-colors group-hover:text-white/90">
+                        {h.desc}
+                      </p>
                     </div>
                   </div>
                 ))}
